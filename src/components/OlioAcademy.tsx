@@ -1475,34 +1475,39 @@ const MODULES = [
 // MAIN APP
 // ═══════════════════════════════════════════════════════════
 
-export default function OlioAcademy() {
-  const [screen, setScreen] = useState("welcome");
-  const [studentName, setStudentName] = useState("");
+export default function OlioAcademy({ initialName = "", initialCompleted = {}, initialScores = {}, onSaveProgress = null, onSignOut = null, userEmail = "" } = {}) {
+  const [screen, setScreen] = useState(initialName ? "dashboard" : "welcome");
+  const [studentName, setStudentName] = useState(initialName);
   const [currentModule, setCurrentModule] = useState(null);
   const [currentLesson, setCurrentLesson] = useState(0);
   const [currentSection, setCurrentSection] = useState(0);
-  const [completedModules, setCompletedModules] = useState({});
-  const [moduleScores, setModuleScores] = useState({});
+  const [completedModules, setCompletedModules] = useState(initialCompleted);
+  const [moduleScores, setModuleScores] = useState(initialScores);
   const [examAnswers, setExamAnswers] = useState({});
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(true);
 
   useEffect(() => {
-    try {
-      const name = localStorage.getItem("sommelier_name");
-      if (name) setStudentName(name);
-      const completed = localStorage.getItem("sommelier_completed");
-      if (completed) setCompletedModules(JSON.parse(completed));
-      const scores = localStorage.getItem("sommelier_scores");
-      if (scores) setModuleScores(JSON.parse(scores));
-      if (name) setScreen("dashboard");
-    } catch (e) {}
-    setLoaded(true);
+    if (!onSaveProgress) {
+      try {
+        const name = localStorage.getItem("sommelier_name");
+        if (name) setStudentName(name);
+        const completed = localStorage.getItem("sommelier_completed");
+        if (completed) setCompletedModules(JSON.parse(completed));
+        const scores = localStorage.getItem("sommelier_scores");
+        if (scores) setModuleScores(JSON.parse(scores));
+        if (name) setScreen("dashboard");
+      } catch (e) {}
+    }
   }, []);
 
   const saveName = (name: string) => {
     setStudentName(name);
-    try { localStorage.setItem("sommelier_name", name); } catch (e) {}
+    if (onSaveProgress) {
+      onSaveProgress(name, completedModules, moduleScores);
+    } else {
+      try { localStorage.setItem("sommelier_name", name); } catch (e) {}
+    }
     setScreen("dashboard");
   };
 
@@ -1518,10 +1523,14 @@ export default function OlioAcademy() {
     const updatedScores = { ...moduleScores, [moduleId]: score };
     setCompletedModules(updated);
     setModuleScores(updatedScores);
-    try {
-      localStorage.setItem("sommelier_completed", JSON.stringify(updated));
-      localStorage.setItem("sommelier_scores", JSON.stringify(updatedScores));
-    } catch (e) {}
+    if (onSaveProgress) {
+      onSaveProgress(studentName, updated, updatedScores);
+    } else {
+      try {
+        localStorage.setItem("sommelier_completed", JSON.stringify(updated));
+        localStorage.setItem("sommelier_scores", JSON.stringify(updatedScores));
+      } catch (e) {}
+    }
     setScreen("dashboard");
   };
 
@@ -1597,6 +1606,8 @@ export default function OlioAcademy() {
                 allComplete={allComplete}
                 onStartModule={startModule}
                 onStartQuiz={startQuiz}
+                onSignOut={onSignOut}
+                userEmail={userEmail}
               />
             )}
             {screen === "lesson" && currentModule && (
@@ -1715,13 +1726,19 @@ function WelcomeScreen({ onSubmit }) {
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════
 
-function Dashboard({ name, completedModules, moduleScores, totalProgress, averageScore, allComplete, onStartModule, onStartQuiz }) {
+function Dashboard({ name, completedModules, moduleScores, totalProgress, averageScore, allComplete, onStartModule, onStartQuiz, onSignOut, userEmail }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="min-h-screen px-6 py-10 max-w-3xl mx-auto">
 
       <header className="mb-10">
         <div className="flex justify-between items-center mb-6">
           <Logo markSize={36} fontSize={22} layout="horizontal" subtitle="Sommelier Path" />
+          {onSignOut && (
+            <div className="flex items-center gap-3">
+              {userEmail && <span className="text-xs text-stone-400 hidden sm:block">{userEmail}</span>}
+              <button onClick={onSignOut} className="text-xs text-stone-400 hover:text-stone-700 border border-stone-200 px-3 py-1.5 rounded-lg transition-colors">ออกจากระบบ</button>
+            </div>
+          )}
         </div>
 
         <div className="mt-8">

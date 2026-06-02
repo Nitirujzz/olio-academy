@@ -1,5 +1,5 @@
-import OlioAcademy from "@/components/OlioAcademy";
+import AuthGate from "@/components/AuthGate";
 
 export default function Home() {
-  return <OlioAcademy />;
+  return <AuthGate />;
 }
