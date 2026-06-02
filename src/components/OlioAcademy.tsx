@@ -1999,7 +1999,7 @@ function QuizResultView({ module, answers, onContinue, onRetake }) {
     else { if (answers[i] === q.correct) score++; }
   });
   const percentage = Math.round((score / module.quiz.length) * 100);
-  const passed = percentage >= 75;
+  const passed = score === module.quiz.length;
   const wrong = module.quiz.map((q, i) => ({ ...q, index: i, correct_answer: q.correct, user_answer: answers[i] })).filter((q) => answers[q.index] !== q.correct_answer);
 
   return (
@@ -2011,7 +2011,7 @@ function QuizResultView({ module, answers, onContinue, onRetake }) {
         </div>
         <div className="text-sm text-stone-500 mb-4">{percentage}%</div>
         <div className="inline-block px-6 py-3 rounded-full text-sm font-medium" style={{ background: passed ? "rgba(61,78,46,0.1)" : "rgba(184,132,80,0.1)", color: passed ? "#3D4E2E" : "#8B6B45" }}>
-          {passed ? "🎉 ผ่าน — ปลดล็อก Module ถัดไป" : "💪 ผ่านที่ 75% — ทบทวนแล้วลองอีก"}
+          {passed ? "🎉 ผ่าน — ปลดล็อก Module ถัดไป" : "💪 ต้องได้ 100% — ทบทวนคำไบ้แล้วลองใหม่"}
         </div>
       </div>
 
@@ -2026,9 +2026,12 @@ function QuizResultView({ module, answers, onContinue, onRetake }) {
               <div key={q.index} className="card-shadow bg-white/60 backdrop-blur-sm rounded-xl p-4">
                 <div className="text-xs text-stone-500 mb-1">Q{q.index + 1}</div>
                 <div className="text-stone-800 font-medium mb-2 text-sm">{q.q}</div>
-                <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "#3D4E2E" }}>คำตอบที่ถูก</div>
-                <div className="text-sm text-stone-700">{q.type === "tf" ? (q.correct ? "ถูก" : "ผิด") : q.options[q.correct]}</div>
-                {q.explain && <div className="mt-2 pt-2 border-t border-stone-200/50 text-xs text-stone-600 italic">{q.explain}</div>}
+                {q.explain && (
+                  <>
+                    <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "#8B6B45" }}>คำไบ้</div>
+                    <div className="text-xs text-stone-600 italic">{q.explain}</div>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -2039,10 +2042,7 @@ function QuizResultView({ module, answers, onContinue, onRetake }) {
         {passed ? (
           <button onClick={onContinue} className="btn-primary py-4 rounded-xl font-medium">ไป Module ถัดไป →</button>
         ) : (
-          <>
-            <button onClick={onRetake} className="btn-primary py-4 rounded-xl font-medium">ทำใหม่</button>
-            <button onClick={onContinue} className="py-3 text-sm text-stone-500 hover:text-stone-700">กลับ dashboard ทบทวน</button>
-          </>
+          <button onClick={onRetake} className="btn-primary py-4 rounded-xl font-medium">ทำใหม่</button>
         )}
       </div>
     </motion.div>
